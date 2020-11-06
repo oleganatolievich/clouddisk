@@ -2,6 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/cloud.disk.client/cloud.disk.client.iml" filepath="$PROJECT_DIR$/cloud.disk.client/cloud.disk.client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cloud.disk.common/cloud.disk.common.iml" filepath="$PROJECT_DIR$/cloud.disk.common/cloud.disk.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/cloud.disk.server/cloud.disk.server.iml" filepath="$PROJECT_DIR$/cloud.disk.server/cloud.disk.server.iml" />
       <module fileurl="file://$PROJECT_DIR$/clouddisk.iml" filepath="$PROJECT_DIR$/clouddisk.iml" />
     </modules>
   </component>

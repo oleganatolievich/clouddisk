@@ -4,7 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>ru.oleganatolievich</groupId>
 	<artifactId>clouddisk</artifactId>
+	<packaging>pom</packaging>
 	<version>1.0.1</version>
+	<modules>
+		<module>cloud.disk.client</module>
+		<module>cloud.disk.common</module>
+		<module>cloud.disk.server</module>
+	</modules>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>

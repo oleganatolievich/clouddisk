@@ -6,10 +6,15 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="clouddisk" />
+        <module name="cloud.disk.client" />
+        <module name="cloud.disk.common" />
+        <module name="cloud.disk.server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="cloud.disk.client" target="1.8" />
+      <module name="cloud.disk.common" target="1.8" />
+      <module name="cloud.disk.server" target="1.8" />
       <module name="clouddisk" target="1.8" />
     </bytecodeTargetLevel>
   </component>
