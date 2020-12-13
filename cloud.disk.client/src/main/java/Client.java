@@ -9,9 +9,7 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 
 public class Client extends Application {
 
@@ -19,6 +17,7 @@ public class Client extends Application {
 	private final String settingsFileName = "client_settings.json";
 	private Stage mainStage;
 	private AuthorizationController authController;
+	private DataStorageController dsController;
 	private Connector connector;
 
 	public Settings getSettings() {
@@ -37,39 +36,99 @@ public class Client extends Application {
 		this.mainStage = mainStage;
 	}
 
+	public DataStorageController getDSController() {
+		return dsController;
+	}
+
+	public void setDSController(DataStorageController dsController) {
+		this.dsController = dsController;
+	}
+
 	public static void main(String[] args) {
 		launch(args);
 	}
 
 	public OperationResult authorizeUser(String login, String password, ChannelFutureListener finishListener) {
-		String passwordHash = getHashString(password, "SHA-512");
-		if (connector == null) connector = new Connector(this, settings);
-		OperationResult authResult = connector.startClient();
-		if (authResult.isSuccess()) connector.authorizeUser(login, passwordHash, finishListener);
+		if (connector == null) connector = new Connector(this);
+		OperationResult startingNetResult = connector.startClient();
+		if (!startingNetResult.isSuccess()) return startingNetResult;
+		OperationResult authResult = connector.authorizeUser(login, password, finishListener);
 		return authResult;
 	}
 
-	public void handleAuthorizationResult(OperationResult authResult) {
-		if (authController != null) authController.handleAuthorizationResult(authResult);
+	public OperationResult registerUser(String login, String password, ChannelFutureListener finishListener) {
+		OperationResult<String> hashingResult = PasswordHasher.createHash(password);
+		if (!hashingResult.isSuccess()) return hashingResult;
+		String passwordHash = hashingResult.getProduct();
+		if (connector == null) connector = new Connector(this);
+		OperationResult startingNetResult = connector.startClient();
+		if (!startingNetResult.isSuccess()) return startingNetResult;
+		OperationResult authResult = connector.authorizeUser(login, passwordHash, finishListener);
+		return authResult;
 	}
 
-	public String getHashString(String source, String algorithmName) {
-		String funcResult = null;
-		try {
-			MessageDigest coder = MessageDigest.getInstance(algorithmName);
-			byte[] messageBytes = coder.digest(source.getBytes());
-			funcResult = new BigInteger(1, messageBytes).toString(16);
-			while (funcResult.length() < 32) funcResult = "0" + funcResult;
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
+	public OperationResult uploadFile(UploadRequest ur, ChannelFutureListener finishListener) {
+		OperationResult funcResult;
+		if (connector == null || !connector.isRunning()) funcResult = OperationResult.getFailure("Server is down");
+		else funcResult = connector.uploadFile(ur, finishListener);
 		return funcResult;
+	}
+
+	public OperationResult downloadFile(DownloadRequest dr, ChannelFutureListener finishListener) {
+		OperationResult funcResult;
+		if (connector == null || !connector.isRunning()) funcResult = OperationResult.getFailure("Server is down");
+		else funcResult = connector.downloadFile(dr, finishListener);
+		return funcResult;
+	}
+
+	public OperationResult getServerFilesList(String serverPath, ChannelFutureListener finishListener) {
+		OperationResult funcResult;
+		if (connector == null || !connector.isRunning()) funcResult = OperationResult.getFailure("Server is down");
+		else funcResult = connector.getServerFilesList(serverPath, finishListener);
+		return funcResult;
+	}
+
+	public OperationResult requestFilesAtServer(ArrayList<FileDescription> fdList, ChannelFutureListener finishListener) {
+		OperationResult funcResult;
+		if (connector == null || !connector.isRunning()) funcResult = OperationResult.getFailure("Server is down");
+		else funcResult = connector.requestFilesAtServer(fdList, finishListener);
+		return funcResult;
+	}
+
+	public void handleAuthorizationResponse(OperationResult commandResult) {
+		if (commandResult.isSuccess()) {
+			AuthorizationResponse ar = (AuthorizationResponse)commandResult.getProduct();
+			settings.setServerDirectory(ar.getServerRoot());
+		}
+		if (authController != null) authController.handleAuthorizationResponse(commandResult);
+	}
+
+	public void handleFileListResponse(FileListResponse flResponse) {
+		if (dsController != null) dsController.handleFileListResponse(flResponse);
+	}
+
+	public void handleDirectoryResponse(DirectoryResponse directoryResponse) {
+		if (dsController != null) dsController.handleDirectoryResponse(directoryResponse);
+	}
+
+	public void handleUploadResponse(UploadResponse uploadResponse) {
+		if (dsController != null) dsController.handleUploadResponse(uploadResponse);
+	}
+
+	public void updateDownloadStatus(DownloadResponse dr, FileStatus fs) {
+		if (dsController != null) dsController.updateDownloadStatus(dr, fs);
+	}
+
+	public void handleServerError(ServerError error) {
+		System.out.println("Oops: " + error.getShortMessage());
 	}
 
 	@Override
 	public void start(Stage stage) {
 		setMainStage(stage);
 		mainStage.setOnCloseRequest(e -> {
+			saveConfiguration();
+			if (connector != null) connector.stopClientNow();
 			Platform.exit();
 			System.exit(0);
 		});
@@ -79,7 +138,7 @@ public class Client extends Application {
 	}
 
 	public OperationResult loadConfiguration() {
-		OperationResult funcResult = OperationResult.getSuccess();
+		OperationResult funcResult = OperationResult.getSuccess(null);
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			settings = mapper.readValue(new File(settingsFileName), Settings.class);
@@ -91,7 +150,7 @@ public class Client extends Application {
 	}
 
 	public OperationResult saveConfiguration() {
-		OperationResult funcResult = OperationResult.getSuccess();
+		OperationResult funcResult = OperationResult.getSuccess(null);
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			mapper.writerWithDefaultPrettyPrinter().writeValue(new File(settingsFileName), settings);
@@ -102,7 +161,7 @@ public class Client extends Application {
 	}
 
 	private void showLoginForm(Stage stage) {
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/authorization.fxml"));
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Authorization.fxml"));
 		Parent loginForm = null;
 		try {
 			loginForm = loader.load();
@@ -113,10 +172,11 @@ public class Client extends Application {
 			System.exit(1);
 		}
 		if (loginForm != null) {
-			authController = loader.<AuthorizationController>getController();
+			authController = loader.getController();
 			authController.setClient(this);
+			authController.fillSettings();
 
-			stage.setTitle("Cloud disk");
+			stage.setTitle("Cloud disk client");
 			stage.setScene(new Scene(loginForm));
 			stage.show();
 		}

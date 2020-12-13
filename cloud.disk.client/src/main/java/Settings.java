@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Settings {
@@ -8,16 +9,22 @@ public class Settings {
     @JsonProperty("port")
     private int serverPort;
 
-    @JsonProperty("currentDirectory")
-    private String currentUserDirectory;
+    @JsonProperty("clientDirectory")
+    private String clientDirectory;
+
+    @JsonIgnore
+    private String serverDirectory = "";
+
+    @JsonIgnore
+    private String serverRoot;
 
     public Settings() {
     }
 
-    public Settings(String serverHost, int serverPort, String currentUserDirectory) {
+    public Settings(String serverHost, int serverPort, String clientDirectory) {
         this.serverHost = serverHost;
         this.serverPort = serverPort;
-        this.currentUserDirectory = currentUserDirectory;
+        this.clientDirectory = clientDirectory;
     }
 
     public static Settings getDefaults() {
@@ -40,12 +47,20 @@ public class Settings {
         this.serverPort = serverPort;
     }
 
-    public String getCurrentUserDirectory() {
-        return currentUserDirectory;
+    public String getClientDirectory() {
+        return clientDirectory;
     }
 
-    public void setCurrentUserDirectory(String currentUserDirectory) {
-        this.currentUserDirectory = currentUserDirectory;
+    public void setClientDirectory(String clientDirectory) {
+        this.clientDirectory = clientDirectory;
+    }
+
+    public String getServerDirectory() {
+        return serverDirectory;
+    }
+
+    public void setServerDirectory(String serverDirectory) {
+        this.serverDirectory = serverDirectory;
     }
 
 }
