@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<StackPane prefWidth="300.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="AuthorizationController">
+	<children>
+		<StackPane>
+			<children>
+				<VBox spacing="10.0">
+					<children>
+						<GridPane>
+							<children>
+								<Label text="User:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+								<Label text="Password:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+								<TextField fx:id="user" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+								<TextField fx:id="password" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+							</children>
+							<columnConstraints>
+								<ColumnConstraints hgrow="SOMETIMES" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" />
+								<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+							</columnConstraints>
+							<rowConstraints>
+								<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+								<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+							</rowConstraints>
+						</GridPane>
+                  <Separator prefWidth="200.0" />
+                  <Label text="Connection settings" underline="true">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <GridPane>
+                     <children>
+                        <Label text="Host:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                        <Label text="Port" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                        <TextField fx:id="host" onAction="#handleOnHostChange" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                        <TextField fx:id="port" maxWidth="50.0" onAction="#handleOnPortChange" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                     </children>
+                     <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="200.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                  </GridPane>
+								<ButtonBar prefHeight="40.0" prefWidth="200.0">
+									<buttons>
+      										<Button fx:id="loginButton" alignment="CENTER" defaultButton="true" mnemonicParsing="false" onAction="#handleLogin" text="Login / Register" />
+									</buttons>
+								</ButtonBar>
+					</children>
+				</VBox>
+			</children>
+		</StackPane>
+	</children>
+	<padding>
+		<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+	</padding>
+</StackPane>

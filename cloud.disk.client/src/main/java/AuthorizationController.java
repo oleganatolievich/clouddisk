@@ -8,9 +8,12 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.stage.Stage;
+import javafx.util.converter.IntegerStringConverter;
 
 import java.io.IOException;
+import java.util.function.UnaryOperator;
 
 public class AuthorizationController {
 
@@ -24,6 +27,12 @@ public class AuthorizationController {
 	private TextField password;
 
 	@FXML
+	private TextField host;
+
+	@FXML
+	private TextField port;
+
+	@FXML
 	private Button loginButton;
 
 	public Client getClient() {
@@ -35,42 +44,98 @@ public class AuthorizationController {
 	}
 
 	@FXML
-	private void initialize() {
+	void initialize() {
+		UnaryOperator<TextFormatter.Change> portFilter = change -> {
+			String newText = change.getControlNewText();
+			return (newText.matches("([1-9][0-9]{0,4})")) ? change : null;
+		};
+		port.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), 0, portFilter));
+		port.focusedProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue) {
+				int portValue;
+				boolean wrongValue = false;
+				try {
+					portValue = Integer.parseInt(port.getText());
+					if (portValue < 0 || portValue > 65535) wrongValue = true;
+				} catch (NumberFormatException e) {
+					portValue = Settings.getDefaults().getServerPort();
+					wrongValue = true;
+				}
+				Settings clientSettings = client.getSettings();
+				if (wrongValue) {
+					port.setText(Integer.toString(clientSettings.getServerPort()));
+					CommonUtils.showMessageBox(Alert.AlertType.ERROR, "Error", "Enter value between 1 and 65535");
+				} else clientSettings.setServerPort(portValue);
+			}
+		});
+	}
+
+	public void fillSettings() {
+		Settings clientSettings = client.getSettings();
+		host.setText(clientSettings.getServerHost());
+		port.setText(Integer.toString(clientSettings.getServerPort()));
 	}
 
 	@FXML
-	private void handleOnActionLogin(ActionEvent event) {
+	void handleOnHostChange(ActionEvent event) {
+		Settings clientSettings = client.getSettings();
+		clientSettings.setServerHost(host.getText());
+	}
+
+	@FXML
+	void handleOnPortChange(ActionEvent event) {
+		Settings clientSettings = client.getSettings();
+		try {
+			clientSettings.setServerPort(Integer.parseInt(port.getText()));
+		} catch (NumberFormatException e) {
+		}
+	}
+
+	@FXML
+	private void handleLogin(ActionEvent event) {
 		String userValue = user.getText().trim();
 		String passwordValue = password.getText().trim();
+		String hostValue = host.getText().trim();
+		String portValue = port.getText().trim();
 
 		if (userValue.isEmpty()) {
-			showMessageBox(AlertType.INFORMATION, "Error", "Please enter user name");
+			CommonUtils.showMessageBox(AlertType.INFORMATION, "Error", "Please enter user name");
 			return;
 		}
 
 		if (passwordValue.isEmpty()) {
-			showMessageBox(AlertType.INFORMATION, "Error", "Please enter password");
+			CommonUtils.showMessageBox(AlertType.INFORMATION, "Error", "Please enter password");
+			return;
+		}
+
+		if (hostValue.isEmpty()) {
+			CommonUtils.showMessageBox(AlertType.INFORMATION, "Error", "Please server host");
+			return;
+		}
+
+		if (portValue.isEmpty()) {
+			CommonUtils.showMessageBox(AlertType.INFORMATION, "Error", "Please server port");
 			return;
 		}
 
 		OperationResult authResult = client.authorizeUser(userValue, passwordValue, future -> {
 			boolean conSuccessFull = future.isSuccess();
-			if (!conSuccessFull) showMessageBox(AlertType.ERROR, "Error", future.cause().getMessage());
+			if (!conSuccessFull) CommonUtils.showMessageBox(AlertType.ERROR, "Error", future.cause().getMessage());
 		});
 
 		if (!authResult.isSuccess()) {
-			showMessageBox(AlertType.ERROR, "Error", authResult.getShortMessage());
+			CommonUtils.showMessageBox(AlertType.ERROR, "Error", authResult.getShortMessage());
 			return;
 		}
 	}
 
-	public void handleAuthorizationResult(OperationResult authResult) {
+	public void handleAuthorizationResponse(OperationResult authResult) {
 		if (authResult.isSuccess()) openDataStorageWindow();
-		else showMessageBox(AlertType.ERROR, "Error", authResult.getShortMessage());
+		else CommonUtils.showMessageBox(AlertType.ERROR, "Error", authResult.getShortMessage());
 	}
 
 	private void openDataStorageWindow() {
-		FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/datastorage.fxml"));
+		FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/DataStorage.fxml"));
 		Parent dsForm = null;
 		try {
 			dsForm = loader.load();
@@ -81,26 +146,18 @@ public class AuthorizationController {
 			System.exit(1);
 		}
 		if (dsForm != null) {
-			dsController = loader.<DataStorageController>getController();
+			dsController = loader.getController();
 			dsController.setClient(client);
-			dsController.setCurrentDirectory(client.getSettings().getCurrentUserDirectory());
+			client.setDSController(dsController);
 
 			Stage mainStage = client.getMainStage();
 			final Scene dsScene = new Scene(dsForm);
 			Platform.runLater(() -> {
 				mainStage.setScene(dsScene);
+				dsController.updateClientFileList();
+				dsController.updateServerFileList();
 			});
 		}
-	}
-
-	private void showMessageBox(AlertType alertType, String title, String content) {
-		Platform.runLater(() -> {
-			Alert alert = new Alert(alertType);
-			alert.setTitle(title);
-			alert.setHeaderText(null);
-			alert.setContentText(content);
-			alert.showAndWait();
-		});
 	}
 
 }

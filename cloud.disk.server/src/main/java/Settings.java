@@ -1,10 +1,11 @@
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.nio.file.Paths;
 
 public class Settings {
 
     @JsonProperty("port")
-    private int clientPort;
+    private int serverPort;
 
     @JsonProperty("storage")
     private String storagePath;
@@ -12,21 +13,21 @@ public class Settings {
     public Settings() {
     }
 
-    public Settings(int clientPort, String storagePath) {
-        this.clientPort = clientPort;
+    public Settings(int serverPort, String storagePath) {
+        this.serverPort = serverPort;
         this.storagePath = storagePath;
     }
 
     public static Settings getDefaults() {
-        return new Settings(41952, Paths.get(System.getProperty("user.dir"), "filestorage").toString());
+        return new Settings(41952, Paths.get(System.getProperty("user.dir")).toString());
     }
 
-    public int getClientPort() {
-        return clientPort;
+    public int getServerPort() {
+        return serverPort;
     }
 
-    public void setClientPort(int clientPort) {
-        this.clientPort = clientPort;
+    public void setPort(int serverPort) {
+        this.serverPort = serverPort;
     }
 
     public String getStoragePath() {
